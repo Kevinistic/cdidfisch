@@ -215,7 +215,7 @@ class FishingBotApp(Tk):
         help_window.resizable(False, False)
 
         help_text = (
-            "Press F6: Toggle spamming ON/OFF\n"
+            "Press F6: Toggle ON/OFF\n"
             "Press F7: Emergency stop\n"
             "Press F8: Recalibrate fishing bar region\n"
         )
@@ -226,12 +226,12 @@ class FishingBotApp(Tk):
     def show_credit(self):
         credit_window = Toplevel(self)
         credit_window.title("Credits")
-        credit_window.geometry("500x150")
+        credit_window.geometry("550x150")
         credit_window.resizable(False, False)
 
         credit_text = (
-            "@cn3z on Discord for programming logic and GUI\n"
-            "@.dar_. on Discord for dynamic scaling\n"
+            "@cn3z on Discord: programming logic and GUI\n"
+            "@.dar_. on Discord: dynamic scaling\n"
         )
 
         label = Label(credit_window, text=credit_text, justify=LEFT, anchor="nw")
