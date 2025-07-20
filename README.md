@@ -1,5 +1,5 @@
 # CDID Fishing Macro
-mancing mania, mantap!
+mancing mania, mantap! THIS MACRO ONLY WORKS IN NIGHTTIME INGAME (18:00-06:00)
 
 ## Prerequisites
 1. have python in ur pc https://www.python.org/downloads/
