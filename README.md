@@ -2,8 +2,8 @@
 mancing mania, mantap!
 
 ## Prerequisites
-have python in ur pc https://www.python.org/downloads/
-also run:
+have python in ur pc https://www.python.org/downloads/\n
+also run this on your terminal:\n
 pip install pyautogui keyboard numpy pillow pywin32
 
 ## Installation
