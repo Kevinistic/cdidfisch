@@ -28,7 +28,14 @@ currently this only works on windows/linux, mac support is unlikely unless this 
 3. (FOR LINUX) edit the first line of the program, directing it to your venv's python
 
 ## Help
-If macro feels too janky, edit aggressive_threshold value in line 185 (win)/177 (linux)
+If macro feels too janky:<br/>
+1. set in-game time to 18:00
+   ```bash
+   /time 18
+2. move your camera so that the background of the bar is the blue sea
+3. edit aggressive_threshold value in line 185 (win)/177 (linux)
+
+you should try the fixes above one by one.
 
 ## Credits
 - @cn3z on Discord: programming logic, GUI, and Linux support<br/>
