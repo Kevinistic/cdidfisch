@@ -117,7 +117,6 @@ class FishingBotApp(Tk):
         self.button_container = Frame(self)
         self.button_container.pack()
         ttk.Button(self.button_container, text="Help", command=self.show_help).grid(row=0, column=0)
-        ttk.Button(self.button_container, text="Credits", command=self.show_credit).grid(row=0, column=1)
 
         self.protocol("WM_DELETE_WINDOW", self.exit_program)
 
@@ -221,20 +220,6 @@ class FishingBotApp(Tk):
         )
 
         label = Label(help_window, text=help_text, justify=LEFT, anchor="nw")
-        label.pack(padx=15, pady=15, fill=BOTH, expand=True)
-
-    def show_credit(self):
-        credit_window = Toplevel(self)
-        credit_window.title("Credits")
-        credit_window.geometry("550x150")
-        credit_window.resizable(False, False)
-
-        credit_text = (
-            "@cn3z on Discord: programming logic and GUI\n"
-            "@.dar_. on Discord: dynamic scaling\n"
-        )
-
-        label = Label(credit_window, text=credit_text, justify=LEFT, anchor="nw")
         label.pack(padx=15, pady=15, fill=BOTH, expand=True)
 
     def exit_program(self):
