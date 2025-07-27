@@ -101,19 +101,23 @@ class FishingBotApp(Tk):
     def __init__(self):
         super().__init__()
         self.title("Fishing Bot [OFF]")
-        self.geometry("550x150")
+        self.geometry("550x200")
         self.resizable(False, False)
         self.attributes("-topmost", True)
 
         self.running = False
         self.mouse_held = False
-        self.fisch_ctr = 0
+        self.last_battling = False
+        self.fishes_ctr = 0
+        self.click_ctr = 0
         self.reel_ctr = 1
 
         self.status_label = Label(self, text="Status: OFF")
         self.status_label.pack(pady=5)
         self.region_label = Label(self, text="Region: Detecting...")
         self.region_label.pack(pady=5)
+        self.fishes_label = Label(self, text="Fish attempts: 0")
+        self.fishes_label.pack(pady=5)
 
         self.button_container = Frame(self)
         self.button_container.pack()
@@ -171,7 +175,7 @@ class FishingBotApp(Tk):
                 gray_center = find_gray_area_center(screenshot)
 
                 if x_pos is not None and gray_center is not None:
-                    self.fisch_ctr = 0
+                    self.click_ctr = 0
                     self.reel_ctr = 1
                     aggressive_threshold = get_screen_info()['width'] * BAR_X_RATIO * 0.03
                     if x_pos > (gray_center + aggressive_threshold):
@@ -184,16 +188,22 @@ class FishingBotApp(Tk):
                         if self.mouse_held:
                             mouse_up()
                             self.mouse_held = False
+                    self.last_battling = True
                 else:
+                    if self.last_battling:
+                        self.fishes_ctr += 1
+                        self.fishes_label.config(text=f"Fish attempts: {self.fishes_ctr}")
+                    self.last_battling = False
+                    
                     self.status_label.config(text=f"Status: Reeling ({self.reel_ctr})")
                     if self.mouse_held:
                         mouse_up()
                         self.mouse_held = False
-                    self.fisch_ctr += 1
-                    if self.fisch_ctr > 10:
+                    self.click_ctr += 1
+                    if self.click_ctr > 10:
                         self.reel_ctr += 1
                         left_click()
-                        self.fisch_ctr = 0
+                        self.click_ctr = 0
 
                 time.sleep(0.01)
             except Exception as e:
