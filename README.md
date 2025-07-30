@@ -8,7 +8,7 @@ currently this only works on windows/linux, mac support is unlikely unless this 
 2. open terminal
 3. install libraries:
    ```bash
-   pip install pyautogui keyboard numpy pillow pywin32
+   pip install pyautogui keyboard numpy pillow pywin32 mouse
 ### Linux
 1. install system dependencies:
    ```bash
