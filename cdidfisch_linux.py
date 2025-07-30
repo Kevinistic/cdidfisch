@@ -3,6 +3,7 @@
 import pyautogui
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 import threading
 import time
 import subprocess
@@ -108,6 +109,8 @@ class FishingBotApp(Tk):
         self.running = False
         self.mouse_held = False
         self.last_battling = False
+        self.autoclicker_active = False
+        self.autoclicker_instance = None
         self.fishes_ctr = 0
         self.click_ctr = 0
         self.reel_ctr = 1
@@ -121,16 +124,26 @@ class FishingBotApp(Tk):
 
         self.button_container = Frame(self)
         self.button_container.pack()
-        ttk.Button(self.button_container, text="Help", command=self.show_help).grid(row=0, column=0)
+        self.help_btn = ttk.Button(self.button_container, text="Help", command=self.show_help)
+        self.help_btn.grid(row=0, column=0)
+        self.autoclicker_btn = ttk.Button(self.button_container, text="Autoclicker", command=self.show_autoclicker)
+        self.autoclicker_btn.grid(row=0, column=1)
 
         self.protocol("WM_DELETE_WINDOW", self.exit_program)
 
         self.region = self.setup_region()
+        self.region_none = self.region == (0, 0, 0, 0)
         self.start_threads()
         self.start_hotkey_listener()
 
+        self.help_window_instance = None
+
     def setup_region(self):
         roblox_window = get_roblox_window()
+        if roblox_window is None:
+            self.region_label.config(text="Region: NONE")
+            self.region_none = True
+            return (0, 0, 0, 0)
         region_info = calculate_expected_bar_position(roblox_window)
         region = (
             region_info['expected_x'],
@@ -139,6 +152,7 @@ class FishingBotApp(Tk):
             region_info['expected_height']
         )
         self.region_label.config(text=f"Region: {region}")
+        self.region_none = False
         return region
 
     def start_threads(self):
@@ -147,27 +161,46 @@ class FishingBotApp(Tk):
     def start_hotkey_listener(self):
         def on_press(key):
             try:
-                if key == keyboard.Key.f6:
-                    self.toggle_running()
-                elif key == keyboard.Key.f7:
-                    self.exit_program()
-                elif key == keyboard.Key.f8:
-                    self.region = self.setup_region()
+                if self.autoclicker_active:
+                    # Forward key events to autoclicker
+                    if key == keyboard.Key.f6:
+                        self.autoclicker_instance.toggle_clicking()
+                    elif key == keyboard.Key.f7:
+                        self.autoclicker_instance.force_quit()
+                        self.autoclicker_active = False
+                else:
+                    # Fishing bot controls
+                    if key == keyboard.Key.f6:
+                        self.toggle_running()
+                    elif key == keyboard.Key.f7:
+                        self.exit_program()
+                    elif key == keyboard.Key.f8:
+                        self.region = self.setup_region()
             except:
                 pass
+
         listener = keyboard.Listener(on_press=on_press)
         listener.daemon = True
         listener.start()
 
+
     def toggle_running(self):
+        if self.region_none:
+            messagebox.showerror("Roblox not detected!", "Roblox not detected! (Press F8 when you're ingame)")
+            return
         self.running = not self.running
         self.title(f"Fishing Bot [{'ON' if self.running else 'OFF'}]")
+        if self.running:
+            self.autoclicker_btn.state(['disabled'])
+        else:
+            self.autoclicker_btn.state(['!disabled'])
 
     def bot_loop(self):
         while True:
-            if not self.running:
-                self.status_label.config(text="Status: OFF")
-                time.sleep(0.1)
+            if self.region_none or not self.running:
+                if not self.autoclicker_active:
+                    self.status_label.config(text="Status: OFF")
+                time.sleep(0.2)
                 continue
             try:
                 screenshot = pyautogui.screenshot(region=self.region)
@@ -194,7 +227,7 @@ class FishingBotApp(Tk):
                         self.fishes_ctr += 1
                         self.fishes_label.config(text=f"Fish attempts: {self.fishes_ctr}")
                     self.last_battling = False
-                    
+
                     self.status_label.config(text=f"Status: Reeling ({self.reel_ctr})")
                     if self.mouse_held:
                         mouse_up()
@@ -210,17 +243,159 @@ class FishingBotApp(Tk):
                 print("❌ Bot Error:", e)
 
     def show_help(self):
-        help_window = Toplevel(self)
-        help_window.title("Help")
-        help_window.geometry("500x150")
-        help_window.resizable(False, False)
+        if self.help_window_instance is not None and self.help_window_instance.winfo_exists():
+            self.help_window_instance.focus()
+            return
+        self.freeze_gui()
+        self.help_window_instance = Toplevel(self)
+        self.help_window_instance.title("Help")
+        self.help_window_instance.geometry("500x150")
+        self.help_window_instance.resizable(False, False)
 
         help_text = (
             "F6 = Toggle ON/OFF\n"
             "F7 = Emergency Stop\n"
             "F8 = Recalibrate Region"
         )
-        Label(help_window, text=help_text, justify=LEFT).pack(padx=15, pady=15, fill=BOTH, expand=True)
+        Label(self.help_window_instance, text=help_text, justify=LEFT).pack(padx=15, pady=15, fill=BOTH, expand=True)
+
+        def on_close():
+            if self.help_window_instance is not None and self.help_window_instance.winfo_exists():
+                self.help_window_instance.destroy()
+            self.help_window_instance = None
+            self.help_btn.state(['!disabled'])
+            self.unfreeze_gui()
+
+        self.help_window_instance.protocol("WM_DELETE_WINDOW", on_close)
+
+    def freeze_gui(self):
+        def _disable_all(widget):
+            try:
+                widget.configure(state='disabled')
+            except:
+                pass
+            for child in widget.winfo_children():
+                _disable_all(child)
+        _disable_all(self)
+
+    def unfreeze_gui(self):
+        def _enable_all(widget):
+            try:
+                widget.configure(state='normal')
+            except:
+                pass
+            for child in widget.winfo_children():
+                _enable_all(child)
+        _enable_all(self)
+
+    def show_autoclicker(self):
+        from pynput.mouse import Button, Controller
+
+        self.autoclicker_active = True
+        self.title("Fishing Bot [DISABLED]")
+        self.status_label.config(text="Status: DISABLED")
+        self.freeze_gui()
+        autoclicker_window = Toplevel(self)
+        autoclicker_window.title("Autoclicker [OFF]")
+        autoclicker_window.geometry("350x300")
+        autoclicker_window.resizable(False, False)
+
+        interval_var = StringVar(value="0.01")
+        button_var = StringVar(value="Left")
+        clicking = [False]
+
+        def click_mouse():
+            button = Button.left if button_var.get() == "Left" else Button.right
+            try:
+                interval = float(interval_var.get())
+            except ValueError:
+                interval = 0.01
+            while clicking[0]:
+                autoclicker_window.title("Autoclicker [ON]")
+                Controller().click(button)
+                time.sleep(interval)
+            autoclicker_window.title("Autoclicker [OFF]")
+
+        def toggle_clicking():
+            clicking[0] = not clicking[0]
+            if clicking[0]:
+                autoclicker_window.title("Autoclicker [ON]")
+                autoclicker_help_btn.state(['disabled'])
+                interval_label.configure(state='disabled')
+                interval_entry.configure(state='disabled')
+                threading.Thread(target=click_mouse, daemon=True).start()
+            else:
+                autoclicker_window.title("Autoclicker [OFF]")
+                autoclicker_help_btn.state(['!disabled'])
+                interval_label.configure(state='normal')
+                interval_entry.configure(state='normal')
+
+        def force_quit():
+            clicking[0] = False
+            autoclicker_window.destroy()
+            self.autoclicker_active = False
+            self.autoclicker_instance = None
+            self.title("Fishing Bot [OFF]")
+            self.status_label.config(text="Status: OFF")
+            self.unfreeze_gui()
+
+        self.autoclicker_instance = type('AutoClickerInstance', (), {
+            'toggle_clicking': staticmethod(toggle_clicking),
+            'force_quit': staticmethod(force_quit)
+        })
+
+        Label(autoclicker_window, text="Click Interval (seconds):").pack(pady=5)
+        interval_label = autoclicker_window.children[list(autoclicker_window.children.keys())[-1]]  # get last added label
+        interval_entry = Entry(autoclicker_window, textvariable=interval_var)
+        interval_entry.pack(pady=5)
+
+        Label(autoclicker_window, text="Mouse Button:").pack(pady=5)
+        ttk.Combobox(autoclicker_window, textvariable=button_var,
+                    values=["Left", "Right"], state="readonly").pack(pady=5)
+
+        autoclicker_help_btn = ttk.Button(autoclicker_window, text="Help")
+        autoclicker_help_btn.pack(pady=10)
+
+        def freeze_autoclicker():
+            def _disable_all(widget):
+                try:
+                    widget.configure(state='disabled')
+                except:
+                    pass
+                for child in widget.winfo_children():
+                    _disable_all(child)
+            _disable_all(autoclicker_window)
+
+        def unfreeze_autoclicker():
+            def _enable_all(widget):
+                try:
+                    widget.configure(state='normal')
+                except:
+                    pass
+                for child in widget.winfo_children():
+                    _enable_all(child)
+            _enable_all(autoclicker_window)
+
+        def show_autoclicker_help():
+            autoclicker_window.title("Autoclicker [DISABLED]")
+            freeze_autoclicker()
+            help_window = Toplevel(autoclicker_window)
+            help_window.title("Help")
+            help_window.geometry("500x150")
+            help_window.resizable(False, False)
+            help_text = "F6 = Toggle ON/OFF\nF7 = Emergency Stop"
+            Label(help_window, text=help_text, justify=LEFT).pack(padx=15, pady=15, fill=BOTH, expand=True)
+            def on_close():
+                if help_window.winfo_exists():
+                    help_window.destroy()
+                autoclicker_help_btn.state(['!disabled'])
+                autoclicker_window.title("Autoclicker [ON]" if clicking[0] else "Autoclicker [OFF]")
+                unfreeze_autoclicker()
+            help_window.protocol("WM_DELETE_WINDOW", on_close)
+
+        autoclicker_help_btn.config(command=show_autoclicker_help)
+
+        autoclicker_window.protocol("WM_DELETE_WINDOW", force_quit)
 
     def exit_program(self):
         try:
