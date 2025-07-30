@@ -29,9 +29,10 @@ currently this only works on windows/linux, mac support is unlikely unless this 
 
 ## Help
 If macro feels too janky:<br/>
-1. set in-game time to 18:00
+1. get into a private server, set in-game time to 18:00 and freeze time
    ```bash
    /time 18
+   /freezetime
 2. move your camera so that the background of the bar is the blue sea
 3. edit aggressive_threshold value in line 185 (win)/177 (linux)
 
