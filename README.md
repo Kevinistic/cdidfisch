@@ -34,7 +34,7 @@ If macro feels too janky:<br/>
    /time 18
    /freezetime
 2. move your camera so that the background of the bar is the blue sea
-3. edit aggressive_threshold value in line 185 (win)/177 (linux)
+3. edit aggressive_threshold value in line 223 (win)/213 (linux)
 
 you should try the fixes above one by one.
 
